@@ -1,5 +1,6 @@
 #include "helper.h"
 #include <stdlib.h>
+#include <math.h>
 
 void (*int_to_bin_fun)(int, char*, int) = NULL;
 
@@ -36,4 +37,8 @@ void int_to_bin(int a, char *buffer, int int_size) {
     }
 
     int_to_bin_fun(a, buffer, int_size);
+}
+
+int int_length(int number) {
+    return floor(log10(abs(number))) + 1;
 }

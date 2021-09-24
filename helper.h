@@ -2,6 +2,8 @@
 
 void int_to_bin(int a, char *buffer, int int_size);
 
+int int_length(int number);
+
 struct delta {
     int heads;
     int state_name;
@@ -16,6 +18,15 @@ struct delta_group {
     int delta_count;
     int start_state;
     int subsequent_state;
+};
+
+struct line {
+    // type of the line
+    // types: 'a'=add, 's'=subtract, 'i'=increase, 'd'=decrease, 'c'=conditional jump, 'g'=goto
+    char type;
+    // line number
+    int number;
+    struct delta_group *deltas;
 };
 
 struct program {
