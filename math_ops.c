@@ -200,7 +200,7 @@ struct delta_group *add_operation(struct program *program, int start_state, int 
     add_deltas->delta_count = 19;
     add_deltas->deltas = malloc(add_deltas->delta_count * sizeof(struct delta *));
     add_deltas->start_state = start_state;
-    add_deltas->subsequent_state = program->state_count - 1;
+    add_deltas->subsequent_state = subsequent_state;
 
     char *movements = malloc(program->head_count * sizeof(char));
     for (int i = 0; i < program->head_count; ++i) {
@@ -291,7 +291,7 @@ struct delta_group *sub_operation(struct program *program, int start_state, int 
     sub_deltas->delta_count = 19;
     sub_deltas->deltas = malloc(sub_deltas->delta_count * sizeof(struct delta *));
     sub_deltas->start_state = start_state;
-    sub_deltas->subsequent_state = program->state_count - 1;
+    sub_deltas->subsequent_state = subsequent_state;
 
     char *movements = malloc(program->head_count * sizeof(char));
     for (int i = 0; i < program->head_count; ++i) {
