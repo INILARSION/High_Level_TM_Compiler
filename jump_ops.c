@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include "jump_ops.h"
 #include "helper.h"
+#include "cmp_ops.h"
 
 struct delta_group *goto_operation(struct program *program, int start_state, int subsequent_state) {
     struct delta_group *goto_deltas = malloc(sizeof(struct delta_group));
@@ -28,6 +29,23 @@ struct delta_group *goto_operation(struct program *program, int start_state, int
     return goto_deltas;
 }
 
-struct delta_group *if_operation(struct program *program, int start_state, char *compare_op, int band1, int band2, int jump_line_true, int jump_line_false) {
-
+struct delta_group *if_operation(struct program *program, int start_state, char *compare_op, int jump_line_true, int jump_line_false, int band1, int band2) {
+    struct delta_group *if_deltas;
+    if (strcmp(compare_op, "==") == 0) {
+        if_deltas = equal_operation(program, start_state, jump_line_true, jump_line_false, band1, band2);
+    } else if (strcmp(compare_op, "!=") == 0) {
+        if_deltas = equal_operation(program, start_state, jump_line_false, jump_line_true, band1, band2);
+    } else if (strcmp(compare_op, "<") == 0) {
+        if_deltas = bigger_operation(program, start_state, jump_line_false, jump_line_true, band1, band2);
+    } else if (strcmp(compare_op, "<=") == 0) {
+        if_deltas = bigger_equal_operation(program, start_state, jump_line_false, jump_line_true, band1, band2);
+    } else if (strcmp(compare_op, ">") == 0) {
+        if_deltas = bigger_operation(program, start_state, jump_line_true, jump_line_false, band1, band2);
+    }else if (strcmp(compare_op, ">=") == 0) {
+        if_deltas = bigger_equal_operation(program, start_state, jump_line_true, jump_line_false, band1, band2);
+    } else {
+        printf("Wrong comparisson operator!\n");
+        exit(-1);
+    }
+    return if_deltas;
 }
