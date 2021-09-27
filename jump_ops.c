@@ -19,7 +19,7 @@ struct delta_group *goto_operation(struct program *program, int start_state, int
         symbol_blank[i] = 0;
     }
 
-    goto_deltas->deltas[0] = malloc(sizeof(struct delta*));
+    goto_deltas->deltas[0] = malloc(sizeof(struct delta));
     goto_deltas->deltas[0]->state_name = start_state;
     goto_deltas->deltas[0]->subsequent_state = subsequent_state;
     goto_deltas->deltas[0]->read_symbols = symbol_blank;
