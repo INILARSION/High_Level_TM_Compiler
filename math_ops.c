@@ -138,7 +138,7 @@ struct delta_group *end_deltas(struct program *program, int state_add_no_carry, 
     return delta_group;
 }
 
-struct delta_group *walk_back(struct program *program, int state_name, int subsequent_state, int term_1_band, int term_2_band, int result_band) {
+struct delta_group *walk_back_math(struct program *program, int state_name, int subsequent_state, int term_1_band, int term_2_band, int result_band) {
     struct delta_group *delta_group = malloc(sizeof(struct delta_group));
     delta_group->delta_count = 9;
     delta_group->deltas = malloc(delta_group->delta_count * sizeof(struct delta *));
@@ -353,7 +353,7 @@ struct delta_group *add_operation(struct program *program, int start_state, int 
     struct delta_group *add_no_carry_group =  create_add_deltas(program, state_add_no_carry, state_add_carry, movements, augend_band, addend_band, sum_band);
     struct delta_group *add_carry_group = create_add_deltas_carry_over(program, state_add_no_carry, state_add_carry, movements, augend_band, addend_band, sum_band);
     struct delta_group *end_add_group = end_deltas(program, state_add_no_carry, state_add_carry, end_add_state, augend_band, addend_band, sum_band);
-    struct delta_group *walk_back_group = walk_back(program, end_add_state, subsequent_state, augend_band, addend_band, sum_band);
+    struct delta_group *walk_back_group = walk_back_math(program, end_add_state, subsequent_state, augend_band, addend_band, sum_band);
 
     struct delta_group *add_deltas = malloc(sizeof(struct delta_group));
     add_deltas->delta_count = 1 + add_no_carry_group->delta_count + add_carry_group->delta_count + end_add_group->delta_count + walk_back_group->delta_count;
@@ -470,10 +470,10 @@ struct delta_group *sub_operation(struct program *program, int start_state, int 
     int state_sub_carry = program->state_count - 1;
 
     struct delta *start_sub_delta = start_delta(program, start_state, state_sub_no_carry, movements);
-    struct delta_group *sub_no_carry_group =  create_sub_deltas(program, state_sub_no_carry, state_sub_carry, movements, minuend_band, subsequent_state, difference_band);
-    struct delta_group *sub_carry_group = create_sub_deltas_carry_over(program, state_sub_no_carry, state_sub_carry, movements, minuend_band, subsequent_state, difference_band);
-    struct delta_group *end_sub_group = end_deltas(program, state_sub_no_carry, state_sub_carry, end_sub_state, minuend_band, subsequent_state, difference_band);
-    struct delta_group *walk_back_group = walk_back(program, end_sub_state, subsequent_state, minuend_band, subsequent_state, difference_band);
+    struct delta_group *sub_no_carry_group =  create_sub_deltas(program, state_sub_no_carry, state_sub_carry, movements, minuend_band, subtrahend_band, difference_band);
+    struct delta_group *sub_carry_group = create_sub_deltas_carry_over(program, state_sub_no_carry, state_sub_carry, movements, minuend_band, subtrahend_band, difference_band);
+    struct delta_group *end_sub_group = end_deltas(program, state_sub_no_carry, state_sub_carry, end_sub_state, minuend_band, subtrahend_band, difference_band);
+    struct delta_group *walk_back_group = walk_back_math(program, end_sub_state, subsequent_state, minuend_band, subtrahend_band, difference_band);
 
     struct delta_group *add_deltas = malloc(sizeof(struct delta_group));
     add_deltas->delta_count = 1 + sub_no_carry_group->delta_count + sub_carry_group->delta_count + end_sub_group->delta_count + walk_back_group->delta_count;
@@ -508,40 +508,7 @@ struct delta_group *sub_operation(struct program *program, int start_state, int 
     return add_deltas;
 }
 
-void create_number_states(struct program *program, int base_state_name, int num_states) {
-    program->state_names = realloc(program->state_names, (program->state_count +  num_states + 2) * sizeof(char *) );
-
-    // state for going back
-    program->state_names[program->state_count] = calloc(strlen(program->state_names[base_state_name]) + 6, sizeof(char));
-    sprintf(program->state_names[program->state_count++], "%snumsb", program->state_names[base_state_name]);
-
-    // state for going back to beginning
-    program->state_names[program->state_count] = calloc(strlen(program->state_names[base_state_name]) + 5, sizeof(char));
-    sprintf(program->state_names[program->state_count++], "%snumb", program->state_names[base_state_name]);
-
-    // states for writing all bits of the number
-    for (int i = 0; i < num_states; ++i) {
-        program->state_names[program->state_count] = calloc(strlen(program->state_names[base_state_name]) + 8, sizeof(char));
-        sprintf(program->state_names[program->state_count++], "%snum%d", program->state_names[base_state_name], i);
-    }
-}
-
-struct delta_group * write_number_to_tape(struct program *program, int start_state, int subsequent_state, int band, int number) {
-    struct delta_group *write_deltas = malloc(sizeof(struct delta_group));
-    int int_size = (sizeof(int) * 8);
-    write_deltas->delta_count = (2 * int_size) + 6;
-    write_deltas->deltas = malloc(write_deltas->delta_count * sizeof(struct delta *));
-    write_deltas->start_state = start_state;
-    write_deltas->subsequent_state = subsequent_state;
-
-    struct delta **delta_group = write_deltas->deltas;
-
-    char *number_str = calloc(int_size + 1, sizeof(char ));
-    int_to_bin(number, number_str, int_size);
-
-    create_number_states(program, start_state, int_size);
-
-    delta_group[0] = malloc(sizeof(struct delta));
+struct delta_group *create_write_number_deltas(struct program *program, int state_name, int subsequent_state, int band, int number) {
     char *movement_right = malloc(program->head_count * sizeof(char ));
     char *movement_left = malloc(program->head_count * sizeof(char ));
     char *movement_stop = malloc(program->head_count * sizeof(char ));
@@ -565,67 +532,153 @@ struct delta_group * write_number_to_tape(struct program *program, int start_sta
         symbol_1[i] = 0;
     }
 
-    // start writing
-    delta_group[0]->state_name = start_state;
-    delta_group[0]->read_symbols = symbol_blank;
-    delta_group[0]->write_symbols = symbol_blank;
-    delta_group[0]->movements = movement_right;
-    delta_group[0]->subsequent_state = program->state_count - int_size;
+    struct delta_group *write_deltas = malloc(sizeof(struct delta_group));
+    int int_size = sizeof(int) * 8;
+    int str_len = strlen(program->state_names[state_name]);
+    write_deltas->delta_count = (2 * int_size) + 2;
+    write_deltas->deltas = malloc(write_deltas->delta_count * sizeof(struct delta *));
 
-    // write numbers
+    char *number_str = calloc(int_size + 1, sizeof(char ));
+    int_to_bin(number, number_str, int_size);
+
+    program->state_names = realloc(program->state_names, (program->state_count + int_size + 1) * sizeof(char *));
+
+    program->state_names[program->state_count] = calloc(str_len + 2, sizeof(char));
+    sprintf(program->state_names[program->state_count], "%s0", program->state_names[state_name]);
+    program->state_count++;
+
+    write_deltas->deltas[0] = malloc(sizeof(struct delta));
+    write_deltas->deltas[0]->state_name = state_name;
+    write_deltas->deltas[0]->read_symbols = symbol_blank;
+    write_deltas->deltas[0]->subsequent_state = program->state_count - 1;
+    write_deltas->deltas[0]->write_symbols = symbol_blank;
+    write_deltas->deltas[0]->movements = movement_right;
+
     for (int i = 0; i < int_size; ++i) {
-        delta_group[1 + i]->state_name = program->state_count - (int_size - i);
-        delta_group[1 + i]->read_symbols = symbol_0;
-        if (number_str[i] == '0')
-            delta_group[1 + i]->write_symbols = symbol_0;
-        else
-            delta_group[1 + i]->write_symbols = symbol_1;
-        delta_group[1 + i]->movements = movement_right;
-        if (i < int_size - 1)
-            delta_group[1 + i]->subsequent_state = program->state_count - (int_size - (i + 1));
-        else
-            delta_group[1 + i]->subsequent_state = program->state_count - int_size - 2;
+        program->state_names[program->state_count] = calloc(str_len + int_length(i + 1) + 1, sizeof(char));
+        sprintf(program->state_names[program->state_count], "%s%d", program->state_names[state_name], i + 1);
+        program->state_count++;
 
-        delta_group[1 + int_size + i]->state_name = program->state_count - (int_size - i);
-        delta_group[1 + int_size + i]->read_symbols = symbol_1;
+        write_deltas->deltas[i + 1] = malloc(sizeof(struct delta));
+        write_deltas->deltas[i + 1]->state_name = program->state_count - 2;
+        write_deltas->deltas[i + 1]->read_symbols = symbol_0;
+        write_deltas->deltas[i + 1]->subsequent_state = program->state_count - 1;
         if (number_str[i] == '0')
-            delta_group[1 + int_size + i]->write_symbols = symbol_0;
+            write_deltas->deltas[i + 1]->write_symbols = symbol_0;
         else
-            delta_group[1 + int_size + i]->write_symbols = symbol_1;
-        delta_group[1 + int_size + i]->movements = movement_right;
-        if (i < int_size - 1)
-            delta_group[1 + i]->subsequent_state = program->state_count - (int_size - (i + 1));
+            write_deltas->deltas[i + 1]->write_symbols = symbol_1;
+        write_deltas->deltas[i + 1]->movements = movement_right;
+
+        write_deltas->deltas[i + int_size + 1] = malloc(sizeof(struct delta));
+        write_deltas->deltas[i + int_size + 1]->state_name = program->state_count - 2;
+        write_deltas->deltas[i + int_size + 1]->read_symbols = symbol_1;
+        write_deltas->deltas[i + int_size + 1]->subsequent_state = program->state_count - 1;
+        if (number_str[i] == '0')
+            write_deltas->deltas[i + int_size + 1]->write_symbols = symbol_0;
         else
-            delta_group[1 + i]->subsequent_state = program->state_count - int_size - 2;
+            write_deltas->deltas[i + int_size + 1]->write_symbols = symbol_1;
+        write_deltas->deltas[i + int_size + 1]->movements = movement_right;
     }
 
-    // stop writing
-    delta_group[(2 * int_size) + 2]->state_name = program->state_count - int_size - 2;
-    delta_group[(2 * int_size) + 2]->read_symbols = symbol_blank;
-    delta_group[(2 * int_size) + 2]->write_symbols = symbol_blank;
-    delta_group[(2 * int_size) + 2]->movements = movement_left;
-    delta_group[(2 * int_size) + 2]->subsequent_state = program->state_count - int_size - 1;
+    write_deltas->deltas[(2 * int_size) + 1] = malloc(sizeof(struct delta));
+    write_deltas->deltas[(2 * int_size) + 1]->state_name = program->state_count - 1;
+    write_deltas->deltas[(2 * int_size) + 1]->read_symbols = symbol_blank;
+    write_deltas->deltas[(2 * int_size) + 1]->subsequent_state = subsequent_state;
+    write_deltas->deltas[(2 * int_size) + 1]->write_symbols = symbol_blank;
+    write_deltas->deltas[(2 * int_size) + 1]->movements = movement_left;
 
-    // go back
-    delta_group[(2 * int_size) + 3]->state_name = program->state_count - int_size - 1;
-    delta_group[(2 * int_size) + 3]->read_symbols = symbol_0;
-    delta_group[(2 * int_size) + 3]->write_symbols = symbol_0;
-    delta_group[(2 * int_size) + 3]->movements = movement_left;
-    delta_group[(2 * int_size) + 3]->subsequent_state = program->state_count - int_size - 1;
-
-    delta_group[(2 * int_size) + 4]->state_name = program->state_count - int_size - 1;
-    delta_group[(2 * int_size) + 4]->read_symbols = symbol_1;
-    delta_group[(2 * int_size) + 4]->write_symbols = symbol_1;
-    delta_group[(2 * int_size) + 4]->movements = movement_left;
-    delta_group[(2 * int_size) + 4]->subsequent_state = program->state_count - int_size - 1;
-
-    // stop going back
-    delta_group[(2 * int_size) + 5]->state_name = program->state_count - int_size - 1;
-    delta_group[(2 * int_size) + 5]->read_symbols = symbol_blank;
-    delta_group[(2 * int_size) + 5]->write_symbols = symbol_blank;
-    delta_group[(2 * int_size) + 5]->movements = movement_stop;
-    delta_group[(2 * int_size) + 5]->subsequent_state = subsequent_state;
     return write_deltas;
+}
+
+struct delta_group *walk_back_one(struct program *program, int state_name, int subsequent_state, int band) {
+    struct delta_group *delta_group = malloc(sizeof(struct delta_group));
+    delta_group->delta_count = 3;
+    delta_group->deltas = malloc(delta_group->delta_count * sizeof(struct delta));
+
+    char *movements_left = malloc(program->head_count * sizeof(char));
+    char *movements_stop = malloc(program->head_count * sizeof(char));
+    int * symbol_0 = malloc(program->head_count * sizeof(char));
+    int * symbol_1 = malloc(program->head_count * sizeof(char));
+    int * symbol_blank = malloc(program->head_count * sizeof(char));
+    for (int i = 0; i < program->head_count; ++i) {
+        if (i == band) {
+            symbol_0[i] = 1;
+            symbol_1[i] = 2;
+            movements_left[i] = '<';
+        } else {
+            symbol_0[i] = 0;
+            symbol_1[i] = 0;
+            movements_left[i] = '-';
+        }
+        movements_stop[i] = '-';
+        symbol_blank[i] = 0;
+    }
+
+    delta_group->deltas[0] = malloc(sizeof(struct delta));
+    delta_group->deltas[0]->state_name = state_name;
+    delta_group->deltas[0]->read_symbols = symbol_0;
+    delta_group->deltas[0]->subsequent_state = state_name;
+    delta_group->deltas[0]->write_symbols = symbol_0;
+    delta_group->deltas[0]->movements = movements_left;
+
+    delta_group->deltas[1] = malloc(sizeof(struct delta));
+    delta_group->deltas[1]->state_name = state_name;
+    delta_group->deltas[1]->read_symbols = symbol_1;
+    delta_group->deltas[1]->subsequent_state = state_name;
+    delta_group->deltas[1]->write_symbols = symbol_1;
+    delta_group->deltas[1]->movements = movements_left;
+
+    delta_group->deltas[2] = malloc(sizeof(struct delta));
+    delta_group->deltas[2]->state_name = state_name;
+    delta_group->deltas[2]->read_symbols = symbol_blank;
+    delta_group->deltas[2]->subsequent_state = subsequent_state;
+    delta_group->deltas[2]->write_symbols = symbol_blank;
+    delta_group->deltas[2]->movements = movements_stop;
+
+    return delta_group;
+}
+
+struct delta_group *write_number_to_tape(struct program *program, int start_state, int subsequent_state, int band, int number) {
+    char *movements = malloc(program->head_count * sizeof(char));
+    for (int i = 0; i < program->head_count; ++i) {
+        if (i == band)
+            movements[i] = '>';
+        else
+            movements[i] = '-';
+    }
+    program->state_count += 2;
+    program->state_names = realloc(program->state_names, program->state_count * sizeof(char *));
+
+    program->state_names[program->state_count-2] = calloc(strlen(program->state_names[start_state]) + 5, sizeof(char));
+    sprintf(program->state_names[program->state_count-2], "%since",program->state_names[start_state]);
+    int end_add_state = program->state_count - 2;
+
+    program->state_names[program->state_count-1] = calloc(strlen(program->state_names[start_state]) + 5, sizeof(char));
+    sprintf(program->state_names[program->state_count-1], "%sincr",program->state_names[start_state]);
+    int state_incr_start = program->state_count - 1;
+
+    //struct delta *start_incr_delta = start_delta(program, start_state, state_incr_start, movements);
+    struct delta_group *write_deltas = create_write_number_deltas(program, start_state, end_add_state, band, number);
+    struct delta_group *walk_back_deltas = walk_back_one(program, end_add_state, subsequent_state, band);
+
+    struct delta_group *incr_delta_group = malloc(sizeof(struct delta_group));
+    incr_delta_group->delta_count = write_deltas->delta_count + walk_back_deltas->delta_count;
+    incr_delta_group->deltas = malloc(incr_delta_group->delta_count * sizeof(struct delta*));
+
+    int counter = 0;
+    //incr_delta_group->deltas[counter++] = start_incr_delta;
+
+    for (int i = 0; i < write_deltas->delta_count; ++i) {
+        incr_delta_group->deltas[counter++] = write_deltas->deltas[i];
+    }
+    free(write_deltas);
+
+    for (int i = 0; i < walk_back_deltas->delta_count; ++i) {
+        incr_delta_group->deltas[counter++] = walk_back_deltas->deltas[i];
+    }
+    free(walk_back_deltas);
+
+    return incr_delta_group;
 }
 
 void create_incr_states(struct program *program, int base_state_name) {
@@ -637,10 +690,10 @@ void create_incr_states(struct program *program, int base_state_name) {
 
 struct delta_group *incr_operation(struct program *program, int start_state, int subsequent_state, int incr_band) {
     create_incr_states(program, start_state);
-
-
-    struct delta_group *write_deltas = write_number_to_tape(program, start_state, program->state_count - 1, program->head_count - 1, 1);
-    struct delta_group *add_deltas = add_operation(program, program->state_count - 1, subsequent_state, incr_band, program->head_count - 1, incr_band);
+    int end_write_state = program->state_count - 1;
+    struct delta_group *write_deltas = write_number_to_tape(program, start_state, end_write_state,
+                                                            program->head_count - 1, 1);
+    struct delta_group *add_deltas = add_operation(program, end_write_state, subsequent_state, incr_band, program->head_count - 1, incr_band);
 
     struct delta_group *incr_deltas = malloc(sizeof(struct delta_group));
     incr_deltas->delta_count = write_deltas->delta_count + add_deltas->delta_count;
@@ -669,12 +722,12 @@ void create_decr_states(struct program *program, int base_state_name) {
     sprintf(program->state_names[program->state_count++], "%swsub", program->state_names[base_state_name]);
 }
 
-struct delta_group *decr_operation(struct program *program, int start_state, int subsequent_state, int incr_band) {
+struct delta_group *decr_operation(struct program *program, int start_state, int subsequent_state, int decr_band) {
     create_decr_states(program, start_state);
-
-
-    struct delta_group *write_deltas = write_number_to_tape(program, start_state, program->state_count - 1, program->head_count - 1, 1);
-    struct delta_group *sub_deltas = sub_operation(program, program->state_count - 1, subsequent_state, incr_band, program->head_count - 1, incr_band);
+    int end_write_state = program->state_count - 1;
+    struct delta_group *write_deltas = write_number_to_tape(program, start_state, end_write_state,
+                                                            program->head_count - 1, 1);
+    struct delta_group *sub_deltas = sub_operation(program, end_write_state, subsequent_state, decr_band, program->head_count - 1, decr_band);
 
     struct delta_group *decr_deltas = malloc(sizeof(struct delta_group));
     decr_deltas->delta_count = write_deltas->delta_count + sub_deltas->delta_count;
