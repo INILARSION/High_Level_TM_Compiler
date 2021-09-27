@@ -103,14 +103,17 @@ struct delta_group *create_math_deltas(struct program *program, char *movements,
     return delta_group;
 }
 
-struct delta_group *end_deltas(struct program *program, int state_add_no_carry, int state_add_carry, int end_state) {
+struct delta_group *end_deltas(struct program *program, int state_add_no_carry, int state_add_carry, int end_state, int term_1_band, int term_2_band, int result_band) {
     struct delta_group *delta_group = malloc(sizeof(struct delta_group));
     delta_group->delta_count = 2;
     delta_group->deltas = malloc(delta_group->delta_count * sizeof(struct delta *));
 
     char *movement_stop = malloc(program->head_count * sizeof(char ));
     for (int i = 0; i < program->head_count; ++i) {
-        movement_stop[i] = '-';
+        if (i == term_1_band || i == term_2_band  || i == result_band)
+            movement_stop[i] = '<';
+        else
+            movement_stop[i] = '-';
     }
     struct delta *end_delta = malloc(sizeof(struct delta));
     end_delta->state_name = state_add_no_carry;
@@ -349,7 +352,7 @@ struct delta_group *add_operation(struct program *program, int start_state, int 
     struct delta *start_add_delta = start_delta(program, start_state, state_add_no_carry, movements);
     struct delta_group *add_no_carry_group =  create_add_deltas(program, state_add_no_carry, state_add_carry, movements, augend_band, addend_band, sum_band);
     struct delta_group *add_carry_group = create_add_deltas_carry_over(program, state_add_no_carry, state_add_carry, movements, augend_band, addend_band, sum_band);
-    struct delta_group *end_add_group = end_deltas(program, state_add_no_carry, state_add_carry, end_add_state);
+    struct delta_group *end_add_group = end_deltas(program, state_add_no_carry, state_add_carry, end_add_state, augend_band, addend_band, sum_band);
     struct delta_group *walk_back_group = walk_back(program, end_add_state, subsequent_state, augend_band, addend_band, sum_band);
 
     struct delta_group *add_deltas = malloc(sizeof(struct delta_group));
@@ -469,7 +472,7 @@ struct delta_group *sub_operation(struct program *program, int start_state, int 
     struct delta *start_sub_delta = start_delta(program, start_state, state_sub_no_carry, movements);
     struct delta_group *sub_no_carry_group =  create_sub_deltas(program, state_sub_no_carry, state_sub_carry, movements, minuend_band, subsequent_state, difference_band);
     struct delta_group *sub_carry_group = create_sub_deltas_carry_over(program, state_sub_no_carry, state_sub_carry, movements, minuend_band, subsequent_state, difference_band);
-    struct delta_group *end_sub_group = end_deltas(program, state_sub_no_carry, state_sub_carry, end_sub_state);
+    struct delta_group *end_sub_group = end_deltas(program, state_sub_no_carry, state_sub_carry, end_sub_state, minuend_band, subsequent_state, difference_band);
     struct delta_group *walk_back_group = walk_back(program, end_sub_state, subsequent_state, minuend_band, subsequent_state, difference_band);
 
     struct delta_group *add_deltas = malloc(sizeof(struct delta_group));
