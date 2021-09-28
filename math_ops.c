@@ -79,7 +79,8 @@ struct delta_group *create_math_deltas(struct program *program, char *movements,
             delta_group->deltas[5]->write_symbols[i] = 2;
             delta_group->deltas[6]->write_symbols[i] = 1;
             delta_group->deltas[7]->write_symbols[i] = 2;
-        } else {
+        }
+        if (i != term_1_band && i != term_2_band && i != result_band) {
             // every other tape than the terms and result bands should read and write a blank
             delta_group->deltas[0]->read_symbols[i] = 0;
             delta_group->deltas[1]->read_symbols[i] = 0;
@@ -422,7 +423,7 @@ struct delta_group *create_sub_deltas_carry_over(struct program *program, int st
     struct delta_group *delta_group = create_math_deltas(program, movements, minuend_band, subtrahend_band, difference_band);
     for (int i = 0; i < delta_group->delta_count; ++i) {
         delta_group->deltas[i]->state_name = state_sub_carry;
-        if (i == 3 || i == 7)
+        if (i == 2 || i == 6)
             delta_group->deltas[i]->subsequent_state = state_sub_no_carry;
         else
             delta_group->deltas[i]->subsequent_state = state_sub_carry;
@@ -433,12 +434,12 @@ struct delta_group *create_sub_deltas_carry_over(struct program *program, int st
         if (i == difference_band) {
             delta_group->deltas[0]->write_symbols[i] = 2;
             delta_group->deltas[1]->write_symbols[i] = 1;
-            delta_group->deltas[2]->write_symbols[i] = 2;
-            delta_group->deltas[3]->write_symbols[i] = 1;
+            delta_group->deltas[2]->write_symbols[i] = 1;
+            delta_group->deltas[3]->write_symbols[i] = 2;
             delta_group->deltas[4]->write_symbols[i] = 2;
             delta_group->deltas[5]->write_symbols[i] = 1;
-            delta_group->deltas[6]->write_symbols[i] = 2;
-            delta_group->deltas[7]->write_symbols[i] = 1;
+            delta_group->deltas[6]->write_symbols[i] = 1;
+            delta_group->deltas[7]->write_symbols[i] = 2;
         }
 
     }
@@ -501,6 +502,7 @@ struct delta_group *sub_operation(struct program *program, int start_state, int 
     free(end_sub_group);
 
     for (int i = 0; i < walk_back_group->delta_count; ++i) {
+        struct delta *d = walk_back_group->deltas[i];
         add_deltas->deltas[counter++] = walk_back_group->deltas[i];
     }
     free(walk_back_group);
