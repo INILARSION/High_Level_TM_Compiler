@@ -40,5 +40,5 @@ void int_to_bin(int a, char *buffer, int int_size) {
 }
 
 int int_length(int number) {
-    return floor(log10(abs(number))) + 1;
+    return (int) floor(log10(abs(number))) + 1;
 }
