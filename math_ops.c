@@ -359,8 +359,6 @@ struct delta_group *add_operation(struct program *program, int start_state, int 
     struct delta_group *add_deltas = malloc(sizeof(struct delta_group));
     add_deltas->delta_count = 1 + add_no_carry_group->delta_count + add_carry_group->delta_count + end_add_group->delta_count + walk_back_group->delta_count;
     add_deltas->deltas = malloc(add_deltas->delta_count * sizeof(struct delta *));
-    add_deltas->start_state = start_state;
-    add_deltas->subsequent_state = subsequent_state;
 
     int counter = 0;
 
@@ -479,8 +477,6 @@ struct delta_group *sub_operation(struct program *program, int start_state, int 
     struct delta_group *add_deltas = malloc(sizeof(struct delta_group));
     add_deltas->delta_count = 1 + sub_no_carry_group->delta_count + sub_carry_group->delta_count + end_sub_group->delta_count + walk_back_group->delta_count;
     add_deltas->deltas = malloc(add_deltas->delta_count * sizeof(struct delta *));
-    add_deltas->start_state = start_state;
-    add_deltas->subsequent_state = subsequent_state;
 
     int counter = 0;
 
@@ -700,8 +696,6 @@ struct delta_group *incr_operation(struct program *program, int start_state, int
     struct delta_group *incr_deltas = malloc(sizeof(struct delta_group));
     incr_deltas->delta_count = write_deltas->delta_count + add_deltas->delta_count;
     incr_deltas->deltas = malloc(incr_deltas->delta_count * sizeof(struct delta *));
-    incr_deltas->start_state = start_state;
-    incr_deltas->subsequent_state = subsequent_state;
 
     for (int i = 0; i < write_deltas->delta_count; ++i) {
         incr_deltas->deltas[i] = write_deltas->deltas[i];
@@ -734,8 +728,6 @@ struct delta_group *decr_operation(struct program *program, int start_state, int
     struct delta_group *decr_deltas = malloc(sizeof(struct delta_group));
     decr_deltas->delta_count = write_deltas->delta_count + sub_deltas->delta_count;
     decr_deltas->deltas = malloc(decr_deltas->delta_count * sizeof(struct delta *));
-    decr_deltas->start_state = start_state;
-    decr_deltas->subsequent_state = subsequent_state;
 
     for (int i = 0; i < write_deltas->delta_count; ++i) {
         decr_deltas->deltas[i] = write_deltas->deltas[i];

@@ -24,8 +24,6 @@ struct delta_group *equal_operation(struct program *program, int start_state, in
     struct delta_group *equal_deltas = malloc(sizeof(struct delta_group));
     equal_deltas->delta_count = 14;
     equal_deltas->deltas = malloc(equal_deltas->delta_count * sizeof(struct delta *));
-    equal_deltas->start_state = start_state;
-    equal_deltas->subsequent_state = subsequent_state_true;
 
     // setup all read/write symbols and movements
     char *movement_right = malloc(program->head_count * sizeof(char ));
@@ -215,8 +213,6 @@ struct delta_group *bigger_operation(struct program *program, int start_state, i
     struct delta_group *bigger_equal_deltas = malloc(sizeof(struct delta_group));
     bigger_equal_deltas->delta_count = 15 + sub_deltas->delta_count;
     bigger_equal_deltas->deltas = malloc(bigger_equal_deltas->delta_count * sizeof(struct delta *));
-    bigger_equal_deltas->start_state = start_state;
-    bigger_equal_deltas->subsequent_state = subsequent_state_true;
 
     for (int i = 0; i < sub_deltas->delta_count; ++i) {
         struct delta *d = sub_deltas->deltas[i];
@@ -401,8 +397,6 @@ struct delta_group *bigger_equal_operation(struct program *program, int start_st
     struct delta_group *bigger_equal_deltas = malloc(sizeof(struct delta_group));
     bigger_equal_deltas->delta_count = 12 + sub_deltas->delta_count;
     bigger_equal_deltas->deltas = malloc(bigger_equal_deltas->delta_count * sizeof(struct delta *));
-    bigger_equal_deltas->start_state = start_state;
-    bigger_equal_deltas->subsequent_state = subsequent_state_true;
 
     for (int i = 0; i < sub_deltas->delta_count; ++i) {
         bigger_equal_deltas->deltas[i] = sub_deltas->deltas[i];

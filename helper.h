@@ -26,8 +26,6 @@ struct delta {
 struct delta_group {
     struct delta **deltas;
     int delta_count;
-    int start_state;
-    int subsequent_state;
 };
 
 struct add {
