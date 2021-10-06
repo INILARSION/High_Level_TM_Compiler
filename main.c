@@ -1,35 +1,35 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "helper.h"
+#include "parser.h"
+#include "compiler_core.h"
 
-#include <limits.h>
+int main(int argc, char** argv) {
+    char *program_file_path;
+    char *tm_file_path;
+    char *tape_file_path;
 
-int main() {
-    int x = 1;
-    int int_size = (sizeof(int) * 8);
-    char *buffer = calloc(int_size + 1, sizeof(char ));
-    int_to_bin(x, buffer, int_size);
-    printf("int: %d bytes: %s\n", x, buffer);
-    x = -1;
-    int_to_bin(x, buffer, int_size);
-    printf("int: %d bytes: %s\n", x, buffer);
+    if (argc == 3) {
+        program_file_path = argv[1];
+        tm_file_path = calloc(strlen(argv[2]) + 7, sizeof(char));
+        sprintf(tm_file_path, "%s.delta", argv[2]);
+        tape_file_path = calloc(strlen(argv[2]) + 6, sizeof(char));
+        sprintf(tape_file_path, "%s.tape", argv[2]);
+    } else {
+        printf("Usage: %s [Program file] [Output file]", argv[0]);
+        return -1;
+    }
 
-    x = -2;
-    int_to_bin(x, buffer, int_size);
-    printf("int: %d bytes: %s\n", x, buffer);
+    struct program *program = parse_program(program_file_path);
 
-    x = INT_MAX;
-    int_to_bin(x, buffer, int_size);
-    printf("Int MAX int: %d bytes: %s\n", x, buffer);
+    struct tapes *tapes = create_tapes(program);
 
-    x = INT_MIN;
-    int_to_bin(x, buffer, int_size);
-    printf("INT MINint: %d bytes: %s\n", x, buffer);
+    compile_program(program);
 
-    // string to int
-    char number_str[10] = "12";
-    int number = atoi(number_str);
-    printf("number %s is number: %d", number_str, number);
+    write_compiled_program(program, tm_file_path);
+
+    write_tapes(program, tapes, tape_file_path);
 
     return 0;
 }
