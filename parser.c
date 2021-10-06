@@ -46,14 +46,15 @@ int is_line_emtpy(char *line, int length) {
         return 1;
 
     // comment or only spaces
-    char *trimmed = strdup(line);
+    char *char_ptr;
+    char *trimmed = char_ptr = strdup(line);
     trimmed = trim(trimmed);
     length = strlen(trimmed);
     int is_empty = 0;
     if (length == 0 || (length > 1 && trimmed[0] == '/' && trimmed[1] == '/')) {
         is_empty = 1;
     }
-    free(trimmed);
+    free(char_ptr);
     return is_empty;
 }
 
@@ -360,8 +361,6 @@ void write_compiled_program(struct program *program, char *filename) {
     struct delta_group *deltas;
     // write deltas
     for (int i = 0; i < program->line_count; ++i) {
-        if(lines[i]->type == 'e')
-            continue;
         deltas = lines[i]->deltas;
         for (int j = 0; j < deltas->delta_count; ++j) {
             print_delta(program, deltas->deltas[j], file_ptr);

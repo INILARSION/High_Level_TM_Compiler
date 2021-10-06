@@ -45,7 +45,10 @@ void compile_program(struct program *program) {
         line = program->lines[i];
         switch (line->type) {
             case 'e':
-                continue;
+                state_name = find_line_state(program, line->line_number);
+                subsequent_state = find_line_subsequent_state(program, line->line_number + 1);
+                line->deltas = goto_operation(program, state_name, subsequent_state);
+                break;
             case 'a':
                 state_name = find_line_state(program, line->line_number);
                 subsequent_state = find_line_subsequent_state(program, line->line_number + 1);
