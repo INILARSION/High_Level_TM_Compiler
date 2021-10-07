@@ -533,7 +533,7 @@ struct delta_group *create_write_number_deltas(struct program *program, int stat
     struct delta_group *write_deltas = malloc(sizeof(struct delta_group));
     int int_size = sizeof(int) * 8;
     int str_len = strlen(program->state_names[state_name]);
-    write_deltas->delta_count = (2 * int_size) + 2;
+    write_deltas->delta_count = (2 * int_size);
     write_deltas->deltas = malloc(write_deltas->delta_count * sizeof(struct delta *));
 
     char *number_str = calloc(int_size + 1, sizeof(char ));
@@ -552,7 +552,7 @@ struct delta_group *create_write_number_deltas(struct program *program, int stat
     write_deltas->deltas[0]->write_symbols = symbol_blank;
     write_deltas->deltas[0]->movements = movement_right;
 
-    for (int i = 0; i < int_size; ++i) {
+    for (int i = 0; i < int_size - 1; ++i) {
         program->state_names[program->state_count] = calloc(str_len + int_length(i + 1) + 1, sizeof(char));
         sprintf(program->state_names[program->state_count], "%s%d", program->state_names[state_name], i + 1);
         program->state_count++;
@@ -567,23 +567,22 @@ struct delta_group *create_write_number_deltas(struct program *program, int stat
             write_deltas->deltas[i + 1]->write_symbols = symbol_1;
         write_deltas->deltas[i + 1]->movements = movement_right;
 
-        write_deltas->deltas[i + int_size + 1] = malloc(sizeof(struct delta));
-        write_deltas->deltas[i + int_size + 1]->state_name = program->state_count - 2;
-        write_deltas->deltas[i + int_size + 1]->read_symbols = symbol_1;
-        write_deltas->deltas[i + int_size + 1]->subsequent_state = program->state_count - 1;
+        write_deltas->deltas[i + int_size] = malloc(sizeof(struct delta));
+        write_deltas->deltas[i + int_size]->state_name = program->state_count - 2;
+        write_deltas->deltas[i + int_size]->read_symbols = symbol_1;
+        write_deltas->deltas[i + int_size]->subsequent_state = program->state_count - 1;
         if (number_str[i] == '0')
-            write_deltas->deltas[i + int_size + 1]->write_symbols = symbol_0;
+            write_deltas->deltas[i + int_size]->write_symbols = symbol_0;
         else
-            write_deltas->deltas[i + int_size + 1]->write_symbols = symbol_1;
-        write_deltas->deltas[i + int_size + 1]->movements = movement_right;
+            write_deltas->deltas[i + int_size]->write_symbols = symbol_1;
+        write_deltas->deltas[i + int_size]->movements = movement_right;
     }
-
-    write_deltas->deltas[(2 * int_size) + 1] = malloc(sizeof(struct delta));
-    write_deltas->deltas[(2 * int_size) + 1]->state_name = program->state_count - 1;
-    write_deltas->deltas[(2 * int_size) + 1]->read_symbols = symbol_blank;
-    write_deltas->deltas[(2 * int_size) + 1]->subsequent_state = subsequent_state;
-    write_deltas->deltas[(2 * int_size) + 1]->write_symbols = symbol_blank;
-    write_deltas->deltas[(2 * int_size) + 1]->movements = movement_left;
+    write_deltas->deltas[(2 * int_size) - 1] = malloc(sizeof(struct delta));
+    write_deltas->deltas[(2 * int_size) - 1]->state_name = program->state_count - 1;
+    write_deltas->deltas[(2 * int_size) - 1]->read_symbols = symbol_blank;
+    write_deltas->deltas[(2 * int_size) - 1]->subsequent_state = subsequent_state;
+    write_deltas->deltas[(2 * int_size) - 1]->write_symbols = symbol_blank;
+    write_deltas->deltas[(2 * int_size) - 1]->movements = movement_left;
 
     return write_deltas;
 }
