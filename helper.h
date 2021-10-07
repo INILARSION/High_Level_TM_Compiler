@@ -93,6 +93,7 @@ struct program {
     // List of all lines of the input program
     struct line **lines;
     int line_count;
+    int program_start_line;
     // initial variables and their values
     struct init_variables *init_variables;
 };

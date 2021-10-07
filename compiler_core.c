@@ -30,7 +30,7 @@ int find_line_state(struct program *program, int line_number) {
 
 int find_line_subsequent_state(struct program *program, int line_number) {
     // return accept state if last line
-    if (line_number - program->init_variables->variable_count > program->line_count)
+    if (line_number - program->program_start_line > program->line_count)
         return 1;
     else
         return find_line_state(program, line_number);

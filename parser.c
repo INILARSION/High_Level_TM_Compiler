@@ -154,7 +154,7 @@ struct program *parse_program(char *program_file_path) {
     //count lines and reset to beginning of file
     int line_count = get_file_line_count(file_ptr);
 
-    int init_end_line = get_number_init_vars(file_ptr, init_variables);
+    program->program_start_line = get_number_init_vars(file_ptr, init_variables);
     init_variables->variable_names = malloc(init_variables->variable_count * sizeof(char *));
     init_variables->variable_init_values = malloc(init_variables->variable_count * sizeof(int));
 
@@ -164,7 +164,7 @@ struct program *parse_program(char *program_file_path) {
     char *var;
     int var_counter = 0;
     // parse the init variables
-    for (int i = 0; i < init_end_line; i++) {
+    for (int i = 0; i < program->program_start_line; i++) {
         line_length = getline(&line, &buffer_size, file_ptr);
        temp_str_ptr =  temp_str = strdup(line);
 
@@ -184,11 +184,11 @@ struct program *parse_program(char *program_file_path) {
         free(temp_str_ptr);
     }
 
-    program->line_count = line_count - init_end_line;
+    program->line_count = line_count - program->program_start_line;
     struct line **lines = malloc(program->line_count * sizeof(struct line *));
 
     // parse the rest
-    for (int i = init_end_line; i < line_count; i++) {
+    for (int i = program->program_start_line; i < line_count; i++) {
         line_length = getline(&line, &buffer_size, file_ptr);
         temp_str_ptr = temp_str = strdup(line);
         struct line *line_struct = malloc(sizeof(struct line));
@@ -250,7 +250,7 @@ struct program *parse_program(char *program_file_path) {
         } else {
             printf("Unknown operation in line %d!\n", i);
         }
-        lines[i - init_end_line] = line_struct;
+        lines[i - program->program_start_line] = line_struct;
         free(temp_str_ptr);
     }
 
