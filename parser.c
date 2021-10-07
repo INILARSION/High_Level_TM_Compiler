@@ -274,35 +274,35 @@ struct program *parse_program(char *program_file_path) {
     return program;
 }
 
+struct tape *int_to_tape_symbols(int int_size, int number) {
+    struct tape *new_tape = malloc(sizeof(struct tape));
+    char *buffer = calloc(int_size + 1, sizeof(char ));
+    int_to_bin(number, buffer, int_size);
+    new_tape->length = int_size;
+    new_tape->tape_arr = calloc(int_size + 2, sizeof(int ));
+    new_tape->tape_arr[0] = 0;
+    for (int j = 0; j < int_size; ++j) {
+        // Buffer is a string of 0 and 1
+        // '0' should be int value 1 and '1' int value 2
+        new_tape->tape_arr[j + 1] = ((int)buffer[j]) - 47;
+    }
+    free(buffer);
+    return new_tape;
+}
+
 
 struct tapes *create_tapes(struct program *program) {
     struct tapes *tapes = malloc(sizeof(struct tapes));
     tapes->tape_count = program->head_count;
     tapes->tapes = malloc(program->head_count * sizeof(struct tape*));
     int int_size = (sizeof(int) * 8);
-    char *buffer;
 
-    struct tape *current_tape;
     for (int i = 0; i < program->init_variables->variable_count; ++i) {
-        current_tape = malloc(sizeof(struct tape));
-        buffer = calloc(int_size + 1, sizeof(char ));
-        int_to_bin(program->init_variables->variable_init_values[i], buffer, int_size);
-        current_tape->length = int_size;
-        current_tape->tape_arr = calloc(int_size + 2, sizeof(int ));
-        current_tape->tape_arr[0] = 0;
-        for (int j = 0; j < int_size; ++j) {
-            // Buffer is a string of 0 and 1
-            // '0' should be int value 1 and '1' int value 2
-            current_tape->tape_arr[j + 1] = ((int)buffer[j]) - 47;
-        }
-        tapes->tapes[i] = current_tape;
+        tapes->tapes[i] = int_to_tape_symbols(int_size, program->init_variables->variable_init_values[i]);
     }
-    // create empty tape, for temporary values for operations
-    current_tape = malloc(sizeof(struct tape));
-    current_tape->length = 1;
-    current_tape->tape_arr = calloc(int_size + 1, sizeof(int ));
-    current_tape->tape_arr[0] = 0;
-    tapes->tapes[program->head_count - 1] = current_tape;
+    // create empty tape, for temporary values for operations, init with value 0
+    tapes->tapes[program->head_count - 1] = int_to_tape_symbols(int_size, 0);
+
     return tapes;
 }
 
