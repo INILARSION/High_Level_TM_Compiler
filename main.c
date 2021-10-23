@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
         tape_file_path = calloc(strlen(argv[2]) + 6, sizeof(char));
         sprintf(tape_file_path, "%s.tape", argv[2]);
     } else {
-        printf("Usage: %s [Program file] [Output file]", argv[0]);
+        printf("Usage: %s [Program file path] [Output file path]", argv[0]);
         return -1;
     }
 
